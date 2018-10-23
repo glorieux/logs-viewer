@@ -1,7 +1,7 @@
-module Main exposing (..)
+module Main exposing (Log, LogLevel(..), Model, Msg(..), decodeLog, decodeLogLevel, decodeLogs, fetchLogs, filterLogs, init, levelToString, main, subscriptions, update, view, viewFilterRadio, viewFilters, viewKeyedLog, viewLog, viewLogs)
 
 import Browser
-import Html exposing (Html, div, form, input, label, table, tbody, td, text, tr)
+import Html exposing (Html, button, div, form, h1, input, label, span, table, tbody, td, text, tr)
 import Html.Attributes exposing (checked, class, for, id, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
 import Html.Keyed as Keyed
@@ -50,8 +50,18 @@ type alias Log =
     }
 
 
+type alias Logs =
+    List Log
+
+
+type LogStatus
+    = Loading
+    | Success Logs
+    | Failure Http.Error
+
+
 type alias Model =
-    { logs : List Log
+    { logs : LogStatus
     , filter : String
     , filterLevels : List LogLevel
     , url : String
@@ -64,7 +74,7 @@ init maybeUrl =
         url =
             Maybe.withDefault "http://localhost:8080/logs" maybeUrl
     in
-    ( { logs = []
+    ( { logs = Loading
       , filter = ""
       , filterLevels = [ Info ]
       , url = url
@@ -82,13 +92,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         FetchLogs ->
-            ( model, fetchLogs model.url )
+            ( { model | logs = Loading }, fetchLogs model.url )
 
         LoadLogs (Ok logs) ->
-            ( { model | logs = decodeLogs logs }, Cmd.none )
+            ( { model | logs = Success (decodeLogs logs) }, Cmd.none )
 
-        LoadLogs (Err _) ->
-            ( model, Cmd.none )
+        LoadLogs (Err error) ->
+            ( { model | logs = Failure error }, Cmd.none )
 
         Filter filter ->
             ( { model | filter = filter }, Cmd.none )
@@ -104,7 +114,7 @@ update msg model =
                     )
 
 
-decodeLogs : String -> List Log
+decodeLogs : String -> Logs
 decodeLogs logs =
     String.lines logs
         |> List.indexedMap decodeLog
@@ -127,43 +137,87 @@ decodeLogLevel log =
 
 view : Model -> Html Msg
 view model =
-    div [ class "logs" ]
-        [ lazy2 viewFilters model.filterLevels model.filter
-        , lazy3 viewLogs model.filter model.filterLevels model.logs
+    case model.logs of
+        Loading ->
+            h1 [ class "tfd-logs-viewer-empty" ] [ text "Loading" ]
+
+        Success logs ->
+            let
+                filteredLogs =
+                    filterLogs model.filter model.filterLevels logs
+            in
+            div [ class "logviewer" ]
+                [ lazy3 viewFilters model logs filteredLogs
+                , lazy viewLogs filteredLogs
+                ]
+
+        Failure error ->
+            h1 [ class "tfd-logs-viewer-empty" ] [ text "Error loading logs" ]
+
+
+viewFilters : Model -> Logs -> Logs -> Html Msg
+viewFilters { filter, filterLevels } logs filteredLogs =
+    form [ class "logviewer__toolbar" ]
+        [ viewCount logs filteredLogs
+        , div [ class "logviewer__toolbar__filters" ]
+            [ viewFilterRadio Info filterLevels
+            , viewFilterRadio Warning filterLevels
+            , viewFilterRadio Error filterLevels
+            ]
+        , input [ onInput (\f -> Filter f), value filter ] []
+        , button [ onClick FetchLogs, type_ "button" ] [ text "refresh" ]
         ]
 
 
-viewFilters : List LogLevel -> String -> Html Msg
-viewFilters filterLevels filter =
-    form [ class "filters" ]
-        [ viewFilterRadio Error filterLevels
-        , viewFilterRadio Warning filterLevels
-        , viewFilterRadio Info filterLevels
-        , input [ onInput (\f -> Filter f), value filter ] []
+viewCount : Logs -> Logs -> Html Msg
+viewCount logs filteredLogs =
+    let
+        logsLength =
+            List.length logs
+
+        countLogsLength =
+            String.fromInt logsLength ++ " " ++ pluralize "line" "lines" logsLength
+
+        filteredLogsLength =
+            List.length filteredLogs
+
+        count =
+            if logsLength /= filteredLogsLength then
+                countLogsLength ++ " (" ++ (String.fromInt filteredLogsLength ++ " " ++ pluralize "match" "matches" filteredLogsLength) ++ ")"
+
+            else
+                countLogsLength
+    in
+    div []
+        [ div
+            [ class "logviewer__toolbar__count" ]
+            [ text count ]
         ]
 
 
 viewFilterRadio : LogLevel -> List LogLevel -> Html Msg
 viewFilterRadio level filterLevels =
-    div []
-        [ input
-            [ type_ "checkbox"
-            , id (levelToString level)
-            , value (levelToString level)
-            , checked (List.member level filterLevels)
-            , onCheck (\checked -> FilterLevel level checked)
+    div [ class "checkbox tc-toggle checkbox" ]
+        [ label [ for (levelToString level) ]
+            [ input
+                [ type_ "checkbox"
+                , id (levelToString level)
+                , value (levelToString level)
+                , checked (List.member level filterLevels)
+                , onCheck (\checked -> FilterLevel level checked)
+                ]
+                []
+            , span [] [ text (levelToString level) ]
             ]
-            []
-        , label [ for (levelToString level) ] [ text (levelToString level) ]
         ]
 
 
-viewLogs : String -> List LogLevel -> List Log -> Html Msg
-viewLogs filter filterLevels logs =
-    table [] [ Keyed.node "tbody" [] (List.map viewKeyedLog (filterLogs filter filterLevels logs)) ]
+viewLogs : Logs -> Html Msg
+viewLogs filteredLogs =
+    table [ class "logviewer__content" ] [ Keyed.node "tbody" [] (List.map viewKeyedLog filteredLogs) ]
 
 
-filterLogs : String -> List LogLevel -> List Log -> List Log
+filterLogs : String -> List LogLevel -> Logs -> Logs
 filterLogs filter filterLevels logs =
     logs
         |> List.filter (\s -> List.member s.level filterLevels)
@@ -178,8 +232,8 @@ viewKeyedLog log =
 viewLog : Log -> Html Msg
 viewLog log =
     tr [ class ("level-" ++ levelToString log.level) ]
-        [ td [] [ text (String.fromInt log.number) ]
-        , td [] [ text log.content ]
+        [ td [ class "logviewer__content__line__number" ] [ text (String.fromInt log.number) ]
+        , td [ class "logviewer__content__line__content" ] [ text log.content ]
         ]
 
 
@@ -187,3 +241,12 @@ fetchLogs : String -> Cmd Msg
 fetchLogs url =
     Http.send LoadLogs <|
         Http.getString url
+
+
+pluralize : String -> String -> Int -> String
+pluralize singular plural number =
+    if number == 1 then
+        singular
+
+    else
+        plural

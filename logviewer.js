@@ -586,11 +586,11 @@ function _Debug_crash_UNUSED(identifier, fact1, fact2, fact3, fact4)
 
 function _Debug_regionToString(region)
 {
-	if (region.V.B === region.ac.B)
+	if (region.V.C === region.ac.C)
 	{
-		return 'on line ' + region.V.B;
+		return 'on line ' + region.V.C;
 	}
-	return 'on lines ' + region.V.B + ' through ' + region.ac.B;
+	return 'on lines ' + region.V.C + ' through ' + region.ac.C;
 }
 
 
@@ -1032,7 +1032,7 @@ function _Http_configureProgress(xhr, maybeProgress)
 
 function _Http_configureRequest(xhr, request)
 {
-	for (var headers = request.K; headers.b; headers = headers.b) // WHILE_CONS
+	for (var headers = request.L; headers.b; headers = headers.b) // WHILE_CONS
 	{
 		xhr.setRequestHeader(headers.a.a, headers.a.b);
 	}
@@ -1074,7 +1074,7 @@ function _Http_toResponse(xhr)
 	return {
 		Y: xhr.responseURL,
 		aO: { aC: xhr.status, l: xhr.statusText },
-		K: _Http_parseHeaders(xhr.getAllResponseHeaders()),
+		L: _Http_parseHeaders(xhr.getAllResponseHeaders()),
 		ay: xhr.response
 	};
 }
@@ -4089,7 +4089,7 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 		impl.aR,
 		impl.aP,
 		function(sendToApp, initialModel) {
-			var divertHrefToApp = impl.C && impl.C(sendToApp)
+			var divertHrefToApp = impl.D && impl.D(sendToApp)
 			var view = impl.aS;
 			var title = _VirtualDom_doc.title;
 			var bodyNode = _VirtualDom_doc.body;
@@ -4164,7 +4164,7 @@ function _Browser_application(impl)
 	var key = function() { key.a(onUrlChange(_Browser_getUrl())); };
 
 	return _Browser_document({
-		C: function(sendToApp)
+		D: function(sendToApp)
 		{
 			key.a = sendToApp;
 			_Browser_window.addEventListener('popstate', key);
@@ -4357,7 +4357,7 @@ function _Browser_getViewport()
 		av: {
 			O: _Browser_window.pageXOffset,
 			P: _Browser_window.pageYOffset,
-			y: _Browser_doc.documentElement.clientWidth,
+			z: _Browser_doc.documentElement.clientWidth,
 			t: _Browser_doc.documentElement.clientHeight
 		}
 	};
@@ -4368,7 +4368,7 @@ function _Browser_getScene()
 	var body = _Browser_doc.body;
 	var elem = _Browser_doc.documentElement;
 	return {
-		y: Math.max(body.scrollWidth, body.offsetWidth, elem.scrollWidth, elem.offsetWidth, elem.clientWidth),
+		z: Math.max(body.scrollWidth, body.offsetWidth, elem.scrollWidth, elem.offsetWidth, elem.clientWidth),
 		t: Math.max(body.scrollHeight, body.offsetHeight, elem.scrollHeight, elem.offsetHeight, elem.clientHeight)
 	};
 }
@@ -4393,13 +4393,13 @@ function _Browser_getViewportOf(id)
 	{
 		return {
 			as: {
-				y: node.scrollWidth,
+				z: node.scrollWidth,
 				t: node.scrollHeight
 			},
 			av: {
 				O: node.scrollLeft,
 				P: node.scrollTop,
-				y: node.clientWidth,
+				z: node.clientWidth,
 				t: node.clientHeight
 			}
 		};
@@ -4434,13 +4434,13 @@ function _Browser_getElement(id)
 			av: {
 				O: x,
 				P: y,
-				y: _Browser_doc.documentElement.clientWidth,
+				z: _Browser_doc.documentElement.clientWidth,
 				t: _Browser_doc.documentElement.clientHeight
 			},
 			aD: {
 				O: x + rect.left,
 				P: y + rect.top,
-				y: rect.width,
+				z: rect.width,
 				t: rect.height
 			}
 		};
@@ -4477,6 +4477,7 @@ function _Browser_load(url)
 	}));
 }
 var author$project$Main$Info = 0;
+var author$project$Main$Loading = {$: 0};
 var author$project$Main$LoadLogs = function (a) {
 	return {$: 1, a: a};
 };
@@ -5154,7 +5155,7 @@ var elm$http$Http$Internal$Request = elm$core$Basics$identity;
 var elm$http$Http$request = elm$core$Basics$identity;
 var elm$http$Http$getString = function (url) {
 	return elm$http$Http$request(
-		{ay: elm$http$Http$emptyBody, Q: elm$http$Http$expectString, K: _List_Nil, S: 'GET', X: elm$core$Maybe$Nothing, Y: url, Z: false});
+		{ay: elm$http$Http$emptyBody, Q: elm$http$Http$expectString, L: _List_Nil, S: 'GET', X: elm$core$Maybe$Nothing, Y: url, Z: false});
 };
 var elm$core$Basics$apR = F2(
 	function (x, f) {
@@ -5718,10 +5719,10 @@ var author$project$Main$init = function (maybeUrl) {
 	var url = A2(elm$core$Maybe$withDefault, 'http://localhost:8080/logs', maybeUrl);
 	return _Utils_Tuple2(
 		{
-			A: '',
+			B: '',
 			k: _List_fromArray(
 				[0]),
-			M: _List_Nil,
+			u: author$project$Main$Loading,
 			Y: url
 		},
 		author$project$Main$fetchLogs(url));
@@ -5730,6 +5731,12 @@ var elm$core$Platform$Sub$batch = _Platform_batch;
 var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var author$project$Main$subscriptions = function (model) {
 	return elm$core$Platform$Sub$none;
+};
+var author$project$Main$Failure = function (a) {
+	return {$: 2, a: a};
+};
+var author$project$Main$Success = function (a) {
+	return {$: 1, a: a};
 };
 var author$project$Main$Error = 2;
 var author$project$Main$Warning = 1;
@@ -5747,8 +5754,8 @@ var author$project$Main$decodeLogLevel = function (log) {
 var author$project$Main$decodeLog = F2(
 	function (index, log) {
 		return {
-			J: log,
-			L: author$project$Main$decodeLogLevel(log),
+			K: log,
+			M: author$project$Main$decodeLogLevel(log),
 			N: index
 		};
 	});
@@ -5778,7 +5785,9 @@ var author$project$Main$update = F2(
 		switch (msg.$) {
 			case 0:
 				return _Utils_Tuple2(
-					model,
+					_Utils_update(
+						model,
+						{u: author$project$Main$Loading}),
 					author$project$Main$fetchLogs(model.Y));
 			case 1:
 				if (!msg.a.$) {
@@ -5787,18 +5796,26 @@ var author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{
-								M: author$project$Main$decodeLogs(logs)
+								u: author$project$Main$Success(
+									author$project$Main$decodeLogs(logs))
 							}),
 						elm$core$Platform$Cmd$none);
 				} else {
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+					var error = msg.a.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								u: author$project$Main$Failure(error)
+							}),
+						elm$core$Platform$Cmd$none);
 				}
 			case 2:
 				var filter = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{A: filter}),
+						{B: filter}),
 					elm$core$Platform$Cmd$none);
 			default:
 				var level = msg.a;
@@ -5827,23 +5844,6 @@ var author$project$Main$update = F2(
 				}
 		}
 	});
-var author$project$Main$Filter = function (a) {
-	return {$: 2, a: a};
-};
-var author$project$Main$FilterLevel = F2(
-	function (a, b) {
-		return {$: 3, a: a, b: b};
-	});
-var author$project$Main$levelToString = function (level) {
-	switch (level) {
-		case 2:
-			return 'error';
-		case 1:
-			return 'warning';
-		default:
-			return 'info';
-	}
-};
 var elm$core$List$any = F2(
 	function (isOkay, list) {
 		any:
@@ -5874,6 +5874,31 @@ var elm$core$List$member = F2(
 			},
 			xs);
 	});
+var author$project$Main$filterLogs = F3(
+	function (filter, filterLevels, logs) {
+		return A2(
+			elm$core$List$filter,
+			function (s) {
+				return A2(
+					elm$core$String$contains,
+					elm$core$String$toLower(filter),
+					elm$core$String$toLower(s.K));
+			},
+			A2(
+				elm$core$List$filter,
+				function (s) {
+					return A2(elm$core$List$member, s.M, filterLevels);
+				},
+				logs));
+	});
+var author$project$Main$FetchLogs = {$: 0};
+var author$project$Main$Filter = function (a) {
+	return {$: 2, a: a};
+};
+var author$project$Main$pluralize = F3(
+	function (singular, plural, number) {
+		return (number === 1) ? singular : plural;
+	});
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$map2 = _Json_map2;
 var elm$json$Json$Decode$succeed = _Json_succeed;
@@ -5890,10 +5915,57 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 	}
 };
 var elm$html$Html$div = _VirtualDom_node('div');
-var elm$html$Html$input = _VirtualDom_node('input');
-var elm$html$Html$label = _VirtualDom_node('label');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
+var elm$json$Json$Encode$string = _Json_wrap;
+var elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			elm$json$Json$Encode$string(string));
+	});
+var elm$html$Html$Attributes$class = elm$html$Html$Attributes$stringProperty('className');
+var author$project$Main$viewCount = F2(
+	function (logs, filteredLogs) {
+		var logsLength = elm$core$List$length(logs);
+		var filteredLogsLength = elm$core$List$length(filteredLogs);
+		var countLogsLength = elm$core$String$fromInt(logsLength) + (' ' + A3(author$project$Main$pluralize, 'line', 'lines', logsLength));
+		var count = (!_Utils_eq(logsLength, filteredLogsLength)) ? (countLogsLength + (' (' + ((elm$core$String$fromInt(filteredLogsLength) + (' ' + A3(author$project$Main$pluralize, 'match', 'matches', filteredLogsLength))) + ')'))) : countLogsLength;
+		return A2(
+			elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('logviewer__toolbar__count')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text(count)
+						]))
+				]));
+	});
+var author$project$Main$FilterLevel = F2(
+	function (a, b) {
+		return {$: 3, a: a, b: b};
+	});
+var author$project$Main$levelToString = function (level) {
+	switch (level) {
+		case 2:
+			return 'error';
+		case 1:
+			return 'warning';
+		default:
+			return 'info';
+	}
+};
+var elm$html$Html$input = _VirtualDom_node('input');
+var elm$html$Html$label = _VirtualDom_node('label');
+var elm$html$Html$span = _VirtualDom_node('span');
 var elm$json$Json$Encode$bool = _Json_wrap;
 var elm$html$Html$Attributes$boolProperty = F2(
 	function (key, bool) {
@@ -5903,14 +5975,6 @@ var elm$html$Html$Attributes$boolProperty = F2(
 			elm$json$Json$Encode$bool(bool));
 	});
 var elm$html$Html$Attributes$checked = elm$html$Html$Attributes$boolProperty('checked');
-var elm$json$Json$Encode$string = _Json_wrap;
-var elm$html$Html$Attributes$stringProperty = F2(
-	function (key, string) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			elm$json$Json$Encode$string(string));
-	});
 var elm$html$Html$Attributes$for = elm$html$Html$Attributes$stringProperty('htmlFor');
 var elm$html$Html$Attributes$id = elm$html$Html$Attributes$stringProperty('id');
 var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
@@ -5947,26 +6011,12 @@ var author$project$Main$viewFilterRadio = F2(
 	function (level, filterLevels) {
 		return A2(
 			elm$html$Html$div,
-			_List_Nil,
 			_List_fromArray(
 				[
-					A2(
-					elm$html$Html$input,
-					_List_fromArray(
-						[
-							elm$html$Html$Attributes$type_('checkbox'),
-							elm$html$Html$Attributes$id(
-							author$project$Main$levelToString(level)),
-							elm$html$Html$Attributes$value(
-							author$project$Main$levelToString(level)),
-							elm$html$Html$Attributes$checked(
-							A2(elm$core$List$member, level, filterLevels)),
-							elm$html$Html$Events$onCheck(
-							function (checked) {
-								return A2(author$project$Main$FilterLevel, level, checked);
-							})
-						]),
-					_List_Nil),
+					elm$html$Html$Attributes$class('checkbox tc-toggle checkbox')
+				]),
+			_List_fromArray(
+				[
 					A2(
 					elm$html$Html$label,
 					_List_fromArray(
@@ -5976,13 +6026,42 @@ var author$project$Main$viewFilterRadio = F2(
 						]),
 					_List_fromArray(
 						[
-							elm$html$Html$text(
-							author$project$Main$levelToString(level))
+							A2(
+							elm$html$Html$input,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$type_('checkbox'),
+									elm$html$Html$Attributes$id(
+									author$project$Main$levelToString(level)),
+									elm$html$Html$Attributes$value(
+									author$project$Main$levelToString(level)),
+									elm$html$Html$Attributes$checked(
+									A2(elm$core$List$member, level, filterLevels)),
+									elm$html$Html$Events$onCheck(
+									function (checked) {
+										return A2(author$project$Main$FilterLevel, level, checked);
+									})
+								]),
+							_List_Nil),
+							A2(
+							elm$html$Html$span,
+							_List_Nil,
+							_List_fromArray(
+								[
+									elm$html$Html$text(
+									author$project$Main$levelToString(level))
+								]))
 						]))
 				]));
 	});
+var elm$html$Html$button = _VirtualDom_node('button');
 var elm$html$Html$form = _VirtualDom_node('form');
-var elm$html$Html$Attributes$class = elm$html$Html$Attributes$stringProperty('className');
+var elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		elm$html$Html$Events$on,
+		'click',
+		elm$json$Json$Decode$succeed(msg));
+};
 var elm$html$Html$Events$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
 };
@@ -6011,19 +6090,31 @@ var elm$html$Html$Events$onInput = function (tagger) {
 			elm$html$Html$Events$alwaysStop,
 			A2(elm$json$Json$Decode$map, tagger, elm$html$Html$Events$targetValue)));
 };
-var author$project$Main$viewFilters = F2(
-	function (filterLevels, filter) {
+var author$project$Main$viewFilters = F3(
+	function (_n0, logs, filteredLogs) {
+		var filter = _n0.B;
+		var filterLevels = _n0.k;
 		return A2(
 			elm$html$Html$form,
 			_List_fromArray(
 				[
-					elm$html$Html$Attributes$class('filters')
+					elm$html$Html$Attributes$class('logviewer__toolbar')
 				]),
 			_List_fromArray(
 				[
-					A2(author$project$Main$viewFilterRadio, 2, filterLevels),
-					A2(author$project$Main$viewFilterRadio, 1, filterLevels),
-					A2(author$project$Main$viewFilterRadio, 0, filterLevels),
+					A2(author$project$Main$viewCount, logs, filteredLogs),
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('logviewer__toolbar__filters')
+						]),
+					_List_fromArray(
+						[
+							A2(author$project$Main$viewFilterRadio, 0, filterLevels),
+							A2(author$project$Main$viewFilterRadio, 1, filterLevels),
+							A2(author$project$Main$viewFilterRadio, 2, filterLevels)
+						])),
 					A2(
 					elm$html$Html$input,
 					_List_fromArray(
@@ -6034,25 +6125,19 @@ var author$project$Main$viewFilters = F2(
 							}),
 							elm$html$Html$Attributes$value(filter)
 						]),
-					_List_Nil)
+					_List_Nil),
+					A2(
+					elm$html$Html$button,
+					_List_fromArray(
+						[
+							elm$html$Html$Events$onClick(author$project$Main$FetchLogs),
+							elm$html$Html$Attributes$type_('button')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text('refresh')
+						]))
 				]));
-	});
-var author$project$Main$filterLogs = F3(
-	function (filter, filterLevels, logs) {
-		return A2(
-			elm$core$List$filter,
-			function (s) {
-				return A2(
-					elm$core$String$contains,
-					elm$core$String$toLower(filter),
-					elm$core$String$toLower(s.J));
-			},
-			A2(
-				elm$core$List$filter,
-				function (s) {
-					return A2(elm$core$List$member, s.L, filterLevels);
-				},
-				logs));
 	});
 var elm$html$Html$td = _VirtualDom_node('td');
 var elm$html$Html$tr = _VirtualDom_node('tr');
@@ -6062,13 +6147,16 @@ var author$project$Main$viewLog = function (log) {
 		_List_fromArray(
 			[
 				elm$html$Html$Attributes$class(
-				'level-' + author$project$Main$levelToString(log.L))
+				'level-' + author$project$Main$levelToString(log.M))
 			]),
 		_List_fromArray(
 			[
 				A2(
 				elm$html$Html$td,
-				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('logviewer__content__line__number')
+					]),
 				_List_fromArray(
 					[
 						elm$html$Html$text(
@@ -6076,10 +6164,13 @@ var author$project$Main$viewLog = function (log) {
 					])),
 				A2(
 				elm$html$Html$td,
-				_List_Nil,
 				_List_fromArray(
 					[
-						elm$html$Html$text(log.J)
+						elm$html$Html$Attributes$class('logviewer__content__line__content')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text(log.K)
 					]))
 			]));
 };
@@ -6096,39 +6187,66 @@ var elm$virtual_dom$VirtualDom$keyedNode = function (tag) {
 		_VirtualDom_noScript(tag));
 };
 var elm$html$Html$Keyed$node = elm$virtual_dom$VirtualDom$keyedNode;
-var author$project$Main$viewLogs = F3(
-	function (filter, filterLevels, logs) {
-		return A2(
-			elm$html$Html$table,
-			_List_Nil,
-			_List_fromArray(
-				[
-					A3(
-					elm$html$Html$Keyed$node,
-					'tbody',
-					_List_Nil,
-					A2(
-						elm$core$List$map,
-						author$project$Main$viewKeyedLog,
-						A3(author$project$Main$filterLogs, filter, filterLevels, logs)))
-				]));
-	});
-var elm$virtual_dom$VirtualDom$lazy2 = _VirtualDom_lazy2;
-var elm$html$Html$Lazy$lazy2 = elm$virtual_dom$VirtualDom$lazy2;
-var elm$virtual_dom$VirtualDom$lazy3 = _VirtualDom_lazy3;
-var elm$html$Html$Lazy$lazy3 = elm$virtual_dom$VirtualDom$lazy3;
-var author$project$Main$view = function (model) {
+var author$project$Main$viewLogs = function (filteredLogs) {
 	return A2(
-		elm$html$Html$div,
+		elm$html$Html$table,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('logs')
+				elm$html$Html$Attributes$class('logviewer__content')
 			]),
 		_List_fromArray(
 			[
-				A3(elm$html$Html$Lazy$lazy2, author$project$Main$viewFilters, model.k, model.A),
-				A4(elm$html$Html$Lazy$lazy3, author$project$Main$viewLogs, model.A, model.k, model.M)
+				A3(
+				elm$html$Html$Keyed$node,
+				'tbody',
+				_List_Nil,
+				A2(elm$core$List$map, author$project$Main$viewKeyedLog, filteredLogs))
 			]));
+};
+var elm$html$Html$h1 = _VirtualDom_node('h1');
+var elm$virtual_dom$VirtualDom$lazy3 = _VirtualDom_lazy3;
+var elm$html$Html$Lazy$lazy3 = elm$virtual_dom$VirtualDom$lazy3;
+var author$project$Main$view = function (model) {
+	var _n0 = model.u;
+	switch (_n0.$) {
+		case 0:
+			return A2(
+				elm$html$Html$h1,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('tfd-logs-viewer-empty')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('Loading')
+					]));
+		case 1:
+			var logs = _n0.a;
+			var filteredLogs = A3(author$project$Main$filterLogs, model.B, model.k, logs);
+			return A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('logviewer')
+					]),
+				_List_fromArray(
+					[
+						A4(elm$html$Html$Lazy$lazy3, author$project$Main$viewFilters, model, logs, filteredLogs),
+						A2(elm$html$Html$Lazy$lazy, author$project$Main$viewLogs, filteredLogs)
+					]));
+		default:
+			var error = _n0.a;
+			return A2(
+				elm$html$Html$h1,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('tfd-logs-viewer-empty')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('Error loading logs')
+					]));
+	}
 };
 var elm$browser$Browser$External = function (a) {
 	return {$: 1, a: a};
