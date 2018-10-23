@@ -54,16 +54,22 @@ type alias Model =
     { logs : List Log
     , filter : String
     , filterLevels : List LogLevel
+    , url : String
     }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : Maybe String -> ( Model, Cmd Msg )
+init maybeUrl =
+    let
+        url =
+            Maybe.withDefault "http://localhost:8080/logs" maybeUrl
+    in
     ( { logs = []
       , filter = ""
       , filterLevels = [ Info ]
+      , url = url
       }
-    , fetchLogs
+    , fetchLogs url
     )
 
 
@@ -76,7 +82,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         FetchLogs ->
-            ( model, fetchLogs )
+            ( model, fetchLogs model.url )
 
         LoadLogs (Ok logs) ->
             ( { model | logs = decodeLogs logs }, Cmd.none )
@@ -111,8 +117,10 @@ decodeLog index log =
 decodeLogLevel log =
     if String.contains "error" (String.toLower log) then
         Error
+
     else if String.contains "warn" (String.toLower log) then
         Warning
+
     else
         Info
 
@@ -175,6 +183,7 @@ viewLog log =
         ]
 
 
-fetchLogs =
+fetchLogs : String -> Cmd Msg
+fetchLogs url =
     Http.send LoadLogs <|
-        Http.getString "http://localhost:8080/logs"
+        Http.getString url
