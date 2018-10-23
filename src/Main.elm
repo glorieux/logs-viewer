@@ -1,4 +1,4 @@
-module Main exposing (Log, LogLevel(..), Model, Msg(..), decodeLog, decodeLogLevel, decodeLogs, fetchLogs, filterLogs, init, levelToString, main, subscriptions, update, view, viewFilterRadio, viewFilters, viewKeyedLog, viewLog, viewLogs)
+module Main exposing (..)
 
 import Browser
 import Html exposing (Html, div, form, input, label, table, tbody, td, text, tr)
@@ -186,4 +186,4 @@ viewLog log =
 fetchLogs : String -> Cmd Msg
 fetchLogs url =
     Http.send LoadLogs <|
-        Http.getString "http://localhost:8080/logs"
+        Http.getString url
