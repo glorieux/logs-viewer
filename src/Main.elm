@@ -161,12 +161,12 @@ viewToolbar { filter, filterLevels, logs } filteredLogs =
         refreshButton =
             case logs of
                 Loading ->
-                    button [ class "btn btn-default", type_ "button", disabled True ] [ text "loading" ]
+                    button [ class "btn btn-link", type_ "button", disabled True ] [ text "loading" ]
 
                 _ ->
-                    button [ class "btn btn-default", onClick FetchLogs, type_ "button" ] [ text "refresh" ]
+                    button [ class "btn btn-link", onClick FetchLogs, type_ "button" ] [ text "refresh" ]
     in
-    form [ class "logviewer__toolbar" ]
+    form [ class "logviewer__toolbar navbar-collapse" ]
         [ viewCount logs filteredLogs
         , div [ class "logviewer__toolbar__filters" ]
             [ viewFilterRadio Info filterLevels

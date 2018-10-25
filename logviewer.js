@@ -6218,7 +6218,7 @@ var author$project$Main$viewToolbar = F2(
 					elm$html$Html$button,
 					_List_fromArray(
 						[
-							elm$html$Html$Attributes$class('btn btn-default'),
+							elm$html$Html$Attributes$class('btn btn-link'),
 							elm$html$Html$Attributes$type_('button'),
 							elm$html$Html$Attributes$disabled(true)
 						]),
@@ -6231,7 +6231,7 @@ var author$project$Main$viewToolbar = F2(
 					elm$html$Html$button,
 					_List_fromArray(
 						[
-							elm$html$Html$Attributes$class('btn btn-default'),
+							elm$html$Html$Attributes$class('btn btn-link'),
 							elm$html$Html$Events$onClick(author$project$Main$FetchLogs),
 							elm$html$Html$Attributes$type_('button')
 						]),
@@ -6245,7 +6245,7 @@ var author$project$Main$viewToolbar = F2(
 			elm$html$Html$form,
 			_List_fromArray(
 				[
-					elm$html$Html$Attributes$class('logviewer__toolbar')
+					elm$html$Html$Attributes$class('logviewer__toolbar navbar-collapse')
 				]),
 			_List_fromArray(
 				[
