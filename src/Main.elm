@@ -1,8 +1,8 @@
-module Main exposing (Log, LogLevel(..), Model, Msg(..), decodeLog, decodeLogLevel, decodeLogs, fetchLogs, filterLogs, init, levelToString, main, subscriptions, update, view, viewFilterRadio, viewFilters, viewKeyedLog, viewLog, viewLogs)
+module Main exposing (Log, LogLevel(..), LogStatus(..), Logs, Model, Msg(..), decodeLog, decodeLogLevel, decodeLogs, fetchLogs, filterLogs, init, levelToString, main, pluralize, subscriptions, update, view, viewCount, viewFilterRadio, viewKeyedLog, viewLog, viewLogs, viewToolbar)
 
 import Browser
 import Html exposing (Html, button, div, form, h1, input, label, span, table, tbody, td, text, tr)
-import Html.Attributes exposing (checked, class, for, id, type_, value)
+import Html.Attributes exposing (checked, class, disabled, for, id, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
 import Html.Keyed as Keyed
 import Html.Lazy exposing (lazy, lazy2, lazy3)
@@ -34,13 +34,13 @@ type LogLevel
 levelToString level =
     case level of
         Error ->
-            "error"
+            "Error"
 
         Warning ->
-            "warning"
+            "Warning"
 
         Info ->
-            "info"
+            "Info"
 
 
 type alias Log =
@@ -137,26 +137,35 @@ decodeLogLevel log =
 
 view : Model -> Html Msg
 view model =
-    case model.logs of
-        Loading ->
-            h1 [ class "tfd-logs-viewer-empty" ] [ text "Loading" ]
+    let
+        filteredLogs =
+            case model.logs of
+                Loading ->
+                    []
 
-        Success logs ->
-            let
-                filteredLogs =
-                    filterLogs model.filter model.filterLevels logs
-            in
-            div [ class "logviewer" ]
-                [ lazy3 viewFilters model logs filteredLogs
-                , lazy viewLogs filteredLogs
-                ]
+                Success logsList ->
+                    filterLogs model.filter model.filterLevels logsList
 
-        Failure error ->
-            h1 [ class "tfd-logs-viewer-empty" ] [ text "Error loading logs" ]
+                Failure _ ->
+                    []
+    in
+    div [ class "logviewer" ]
+        [ lazy2 viewToolbar model filteredLogs
+        , lazy2 viewLogs model filteredLogs
+        ]
 
 
-viewFilters : Model -> Logs -> Logs -> Html Msg
-viewFilters { filter, filterLevels } logs filteredLogs =
+viewToolbar : Model -> Logs -> Html Msg
+viewToolbar { filter, filterLevels, logs } filteredLogs =
+    let
+        refreshButton =
+            case logs of
+                Loading ->
+                    button [ class "btn btn-default", type_ "button", disabled True ] [ text "loading" ]
+
+                _ ->
+                    button [ class "btn btn-default", onClick FetchLogs, type_ "button" ] [ text "refresh" ]
+    in
     form [ class "logviewer__toolbar" ]
         [ viewCount logs filteredLogs
         , div [ class "logviewer__toolbar__filters" ]
@@ -164,35 +173,45 @@ viewFilters { filter, filterLevels } logs filteredLogs =
             , viewFilterRadio Warning filterLevels
             , viewFilterRadio Error filterLevels
             ]
-        , input [ onInput (\f -> Filter f), value filter ] []
-        , button [ onClick FetchLogs, type_ "button" ] [ text "refresh" ]
+        , input [ class "form-control", onInput (\f -> Filter f), value filter ] []
+        , refreshButton
         ]
 
 
-viewCount : Logs -> Logs -> Html Msg
+viewCount : LogStatus -> Logs -> Html Msg
 viewCount logs filteredLogs =
-    let
-        logsLength =
-            List.length logs
+    case logs of
+        Loading ->
+            div
+                [ class "logviewer__toolbar__count" ]
+                [ text "Loading" ]
 
-        countLogsLength =
-            String.fromInt logsLength ++ " " ++ pluralize "line" "lines" logsLength
+        Success logsList ->
+            let
+                logsLength =
+                    List.length logsList
 
-        filteredLogsLength =
-            List.length filteredLogs
+                countLogsLength =
+                    String.fromInt logsLength ++ " " ++ pluralize "line" "lines" logsLength
 
-        count =
-            if logsLength /= filteredLogsLength then
-                countLogsLength ++ " (" ++ (String.fromInt filteredLogsLength ++ " " ++ pluralize "match" "matches" filteredLogsLength) ++ ")"
+                filteredLogsLength =
+                    List.length filteredLogs
 
-            else
-                countLogsLength
-    in
-    div []
-        [ div
-            [ class "logviewer__toolbar__count" ]
-            [ text count ]
-        ]
+                count =
+                    if logsLength /= filteredLogsLength then
+                        countLogsLength ++ " (" ++ (String.fromInt filteredLogsLength ++ " " ++ pluralize "match" "matches" filteredLogsLength) ++ ")"
+
+                    else
+                        countLogsLength
+            in
+            div
+                [ class "logviewer__toolbar__count" ]
+                [ text count ]
+
+        Failure _ ->
+            div
+                [ class "logviewer__toolbar__count" ]
+                []
 
 
 viewFilterRadio : LogLevel -> List LogLevel -> Html Msg
@@ -212,9 +231,17 @@ viewFilterRadio level filterLevels =
         ]
 
 
-viewLogs : Logs -> Html Msg
-viewLogs filteredLogs =
-    table [ class "logviewer__content" ] [ Keyed.node "tbody" [] (List.map viewKeyedLog filteredLogs) ]
+viewLogs : Model -> Logs -> Html Msg
+viewLogs { logs } filteredLogs =
+    case logs of
+        Loading ->
+            h1 [ class "tfd-logs-viewer-empty" ] [ text "Loading" ]
+
+        Success _ ->
+            table [ class "logviewer__content" ] [ Keyed.node "tbody" [] (List.map viewKeyedLog filteredLogs) ]
+
+        Failure error ->
+            h1 [ class "tfd-logs-viewer-empty" ] [ text "Error loading logs" ]
 
 
 filterLogs : String -> List LogLevel -> Logs -> Logs
