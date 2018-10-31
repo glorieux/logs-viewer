@@ -127,10 +127,8 @@ decodeLog index log =
 decodeLogLevel log =
     if String.contains "error" (String.toLower log) then
         Error
-
     else if String.contains "warn" (String.toLower log) then
         Warning
-
     else
         Info
 
@@ -200,7 +198,6 @@ viewCount logs filteredLogs =
                 count =
                     if logsLength /= filteredLogsLength then
                         countLogsLength ++ " (" ++ (String.fromInt filteredLogsLength ++ " " ++ pluralize "match" "matches" filteredLogsLength) ++ ")"
-
                     else
                         countLogsLength
             in
@@ -232,13 +229,17 @@ viewFilterRadio level filterLevels =
 
 
 viewLogs : Model -> Logs -> Html Msg
-viewLogs { logs } filteredLogs =
+viewLogs { logs, filter } filteredLogs =
     case logs of
         Loading ->
             h1 [ class "tfd-logs-viewer-empty" ] [ text "Loading" ]
 
         Success _ ->
-            table [ class "logviewer__content" ] [ Keyed.node "tbody" [] (List.map viewKeyedLog filteredLogs) ]
+            table [ class "logviewer__content" ]
+                [ Keyed.node "tbody"
+                    []
+                    (List.map (viewKeyedLog filter) filteredLogs)
+                ]
 
         Failure error ->
             h1 [ class "tfd-logs-viewer-empty" ] [ text "Error loading logs" ]
@@ -251,17 +252,23 @@ filterLogs filter filterLevels logs =
         |> List.filter (\s -> String.contains (String.toLower filter) (String.toLower s.content))
 
 
-viewKeyedLog : Log -> ( String, Html Msg )
-viewKeyedLog log =
-    ( String.fromInt log.number, lazy viewLog log )
+viewKeyedLog : String -> Log -> ( String, Html Msg )
+viewKeyedLog filter log =
+    ( String.fromInt log.number, lazy2 viewLog filter log )
 
 
-viewLog : Log -> Html Msg
-viewLog log =
+viewLog : String -> Log -> Html Msg
+viewLog filter log =
     tr [ class ("level-" ++ levelToString log.level) ]
         [ td [ class "logviewer__content__line__number" ] [ text (String.fromInt log.number) ]
-        , td [ class "logviewer__content__line__content" ] [ text log.content ]
+        , td [ class "logviewer__content__line__content" ] (markContent log filter)
         ]
+
+
+markContent : Log -> String -> List (Html Msg)
+markContent log filter =
+    String.split log.content filter
+        |> List.map (\l -> text l)
 
 
 fetchLogs : String -> Cmd Msg
@@ -274,6 +281,5 @@ pluralize : String -> String -> Int -> String
 pluralize singular plural number =
     if number == 1 then
         singular
-
     else
         plural
