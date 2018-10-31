@@ -267,15 +267,13 @@ viewLog filter log =
 
 markContent : Log -> String -> List (Html Msg)
 markContent log filter =
-    String.split log.content filter
-        |> List.indexedMap markLog
-
-
-markLog index log =
-    if modBy 2 index == 0 then
-        text log
+    if filter == "" then
+        [text log.content]
     else
-        mark [] [ text log ]
+        String.split filter log.content
+            |> List.map text
+            |> List.intersperse (mark [] [ text filter ])
+
 
 
 fetchLogs : String -> Cmd Msg

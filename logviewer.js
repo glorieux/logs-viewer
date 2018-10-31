@@ -5907,7 +5907,24 @@ var author$project$Main$levelToString = function (level) {
 			return 'Info';
 	}
 };
-var elm$core$Basics$modBy = _Basics_modBy;
+var elm$core$List$intersperse = F2(
+	function (sep, xs) {
+		if (!xs.b) {
+			return _List_Nil;
+		} else {
+			var hd = xs.a;
+			var tl = xs.b;
+			var step = F2(
+				function (x, rest) {
+					return A2(
+						elm$core$List$cons,
+						sep,
+						A2(elm$core$List$cons, x, rest));
+				});
+			var spersed = A3(elm$core$List$foldr, step, _List_Nil, tl);
+			return A2(elm$core$List$cons, hd, spersed);
+		}
+	});
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$map2 = _Json_map2;
 var elm$json$Json$Decode$succeed = _Json_succeed;
@@ -5926,28 +5943,24 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 var elm$html$Html$mark = _VirtualDom_node('mark');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
-var author$project$Main$markLog = F2(
-	function (index, log) {
-		return (!A2(elm$core$Basics$modBy, 2, index)) ? A2(
-			elm$html$Html$mark,
-			_List_Nil,
-			_List_fromArray(
-				[
-					elm$html$Html$text(log)
-				])) : A2(
-			elm$html$Html$mark,
-			_List_Nil,
-			_List_fromArray(
-				[
-					elm$html$Html$text(log)
-				]));
-	});
 var author$project$Main$markContent = F2(
 	function (log, filter) {
-		return A2(
-			elm$core$List$indexedMap,
-			author$project$Main$markLog,
-			A2(elm$core$String$split, log.content, filter));
+		return (filter === '') ? _List_fromArray(
+			[
+				elm$html$Html$text(log.content)
+			]) : A2(
+			elm$core$List$intersperse,
+			A2(
+				elm$html$Html$mark,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(filter)
+					])),
+			A2(
+				elm$core$List$map,
+				elm$html$Html$text,
+				A2(elm$core$String$split, filter, log.content)));
 	});
 var elm$html$Html$td = _VirtualDom_node('td');
 var elm$html$Html$tr = _VirtualDom_node('tr');
