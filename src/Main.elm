@@ -1,4 +1,4 @@
-module Main exposing (Log, LogLevel(..), LogStatus(..), Logs, Model, Msg(..), decodeLog, decodeLogLevel, decodeLogs, fetchLogs, filterLogs, init, levelToString, main, pluralize, subscriptions, update, view, viewCount, viewFilterRadio, viewKeyedLog, viewLog, viewLogs, viewToolbar)
+module Main exposing (Log, LogLevel(..), LogStatus(..), Logs, Model, Msg(..), markContent, decodeLog, decodeLogLevel, decodeLogs, fetchLogs, filterLogs, init, levelToString, main, pluralize, subscriptions, update, view, viewCount, viewFilterRadio, viewKeyedLog, viewLog, viewLogs, viewToolbar)
 
 import Browser
 import Html exposing (Html, button, mark, div, form, h1, input, label, span, table, tbody, td, text, tr)
@@ -261,16 +261,16 @@ viewLog : String -> Log -> Html Msg
 viewLog filter log =
     tr [ class ("level-" ++ levelToString log.level) ]
         [ td [ class "logviewer__content__line__number" ] [ text (String.fromInt log.number) ]
-        , td [ class "logviewer__content__line__content" ] (markContent log filter)
+        , td [ class "logviewer__content__line__content" ] (markContent log.content filter)
         ]
 
 
-markContent : Log -> String -> List (Html Msg)
+markContent : String -> String -> List (Html Msg)
 markContent log filter =
     if filter == "" then
-        [text log.content]
+        [text log]
     else
-        String.split filter log.content
+        String.split filter log
             |> List.map text
             |> List.intersperse (mark [] [ text filter ])
 
