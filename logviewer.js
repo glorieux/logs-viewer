@@ -5907,6 +5907,7 @@ var author$project$Main$levelToString = function (level) {
 			return 'Info';
 	}
 };
+var elm$core$Basics$modBy = _Basics_modBy;
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$map2 = _Json_map2;
 var elm$json$Json$Decode$succeed = _Json_succeed;
@@ -5922,9 +5923,33 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 			return 3;
 	}
 };
-var elm$html$Html$td = _VirtualDom_node('td');
+var elm$html$Html$mark = _VirtualDom_node('mark');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
+var author$project$Main$markLog = F2(
+	function (index, log) {
+		return (!A2(elm$core$Basics$modBy, 2, index)) ? A2(
+			elm$html$Html$mark,
+			_List_Nil,
+			_List_fromArray(
+				[
+					elm$html$Html$text(log)
+				])) : A2(
+			elm$html$Html$mark,
+			_List_Nil,
+			_List_fromArray(
+				[
+					elm$html$Html$text(log)
+				]));
+	});
+var author$project$Main$markContent = F2(
+	function (log, filter) {
+		return A2(
+			elm$core$List$indexedMap,
+			author$project$Main$markLog,
+			A2(elm$core$String$split, log.content, filter));
+	});
+var elm$html$Html$td = _VirtualDom_node('td');
 var elm$html$Html$tr = _VirtualDom_node('tr');
 var elm$json$Json$Encode$string = _Json_wrap;
 var elm$html$Html$Attributes$stringProperty = F2(
@@ -5935,46 +5960,45 @@ var elm$html$Html$Attributes$stringProperty = F2(
 			elm$json$Json$Encode$string(string));
 	});
 var elm$html$Html$Attributes$class = elm$html$Html$Attributes$stringProperty('className');
-var author$project$Main$viewLog = function (log) {
-	return A2(
-		elm$html$Html$tr,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class(
-				'level-' + author$project$Main$levelToString(log.level))
-			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$td,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('logviewer__content__line__number')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text(
-						elm$core$String$fromInt(log.number))
-					])),
-				A2(
-				elm$html$Html$td,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('logviewer__content__line__content')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text(log.content)
-					]))
-			]));
-};
-var elm$virtual_dom$VirtualDom$lazy = _VirtualDom_lazy;
-var elm$html$Html$Lazy$lazy = elm$virtual_dom$VirtualDom$lazy;
-var author$project$Main$viewKeyedLog = function (log) {
-	return _Utils_Tuple2(
-		elm$core$String$fromInt(log.number),
-		A2(elm$html$Html$Lazy$lazy, author$project$Main$viewLog, log));
-};
+var author$project$Main$viewLog = F2(
+	function (filter, log) {
+		return A2(
+			elm$html$Html$tr,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class(
+					'level-' + author$project$Main$levelToString(log.level))
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$td,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('logviewer__content__line__number')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text(
+							elm$core$String$fromInt(log.number))
+						])),
+					A2(
+					elm$html$Html$td,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('logviewer__content__line__content')
+						]),
+					A2(author$project$Main$markContent, log, filter))
+				]));
+	});
+var elm$virtual_dom$VirtualDom$lazy2 = _VirtualDom_lazy2;
+var elm$html$Html$Lazy$lazy2 = elm$virtual_dom$VirtualDom$lazy2;
+var author$project$Main$viewKeyedLog = F2(
+	function (filter, log) {
+		return _Utils_Tuple2(
+			elm$core$String$fromInt(log.number),
+			A3(elm$html$Html$Lazy$lazy2, author$project$Main$viewLog, filter, log));
+	});
 var elm$html$Html$h1 = _VirtualDom_node('h1');
 var elm$html$Html$table = _VirtualDom_node('table');
 var elm$virtual_dom$VirtualDom$keyedNode = function (tag) {
@@ -5985,6 +6009,7 @@ var elm$html$Html$Keyed$node = elm$virtual_dom$VirtualDom$keyedNode;
 var author$project$Main$viewLogs = F2(
 	function (_n0, filteredLogs) {
 		var logs = _n0.logs;
+		var filter = _n0.filter;
 		switch (logs.$) {
 			case 'Loading':
 				return A2(
@@ -6010,7 +6035,10 @@ var author$project$Main$viewLogs = F2(
 							elm$html$Html$Keyed$node,
 							'tbody',
 							_List_Nil,
-							A2(elm$core$List$map, author$project$Main$viewKeyedLog, filteredLogs))
+							A2(
+								elm$core$List$map,
+								author$project$Main$viewKeyedLog(filter),
+								filteredLogs))
 						]));
 			default:
 				var error = logs.a;
@@ -6277,8 +6305,6 @@ var author$project$Main$viewToolbar = F2(
 					refreshButton
 				]));
 	});
-var elm$virtual_dom$VirtualDom$lazy2 = _VirtualDom_lazy2;
-var elm$html$Html$Lazy$lazy2 = elm$virtual_dom$VirtualDom$lazy2;
 var author$project$Main$view = function (model) {
 	var filteredLogs = function () {
 		var _n0 = model.logs;

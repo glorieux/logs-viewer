@@ -1,7 +1,7 @@
 module Main exposing (Log, LogLevel(..), LogStatus(..), Logs, Model, Msg(..), decodeLog, decodeLogLevel, decodeLogs, fetchLogs, filterLogs, init, levelToString, main, pluralize, subscriptions, update, view, viewCount, viewFilterRadio, viewKeyedLog, viewLog, viewLogs, viewToolbar)
 
 import Browser
-import Html exposing (Html, button, div, form, h1, input, label, span, table, tbody, td, text, tr)
+import Html exposing (Html, button, mark, div, form, h1, input, label, span, table, tbody, td, text, tr)
 import Html.Attributes exposing (checked, class, disabled, for, id, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
 import Html.Keyed as Keyed
@@ -74,13 +74,13 @@ init maybeUrl =
         url =
             Maybe.withDefault "http://localhost:8080/logs" maybeUrl
     in
-    ( { logs = Loading
-      , filter = ""
-      , filterLevels = [ Info ]
-      , url = url
-      }
-    , fetchLogs url
-    )
+        ( { logs = Loading
+          , filter = ""
+          , filterLevels = [ Info ]
+          , url = url
+          }
+        , fetchLogs url
+        )
 
 
 subscriptions : Model -> Sub Msg
@@ -147,10 +147,10 @@ view model =
                 Failure _ ->
                     []
     in
-    div [ class "logviewer" ]
-        [ lazy2 viewToolbar model filteredLogs
-        , lazy2 viewLogs model filteredLogs
-        ]
+        div [ class "logviewer" ]
+            [ lazy2 viewToolbar model filteredLogs
+            , lazy2 viewLogs model filteredLogs
+            ]
 
 
 viewToolbar : Model -> Logs -> Html Msg
@@ -164,16 +164,16 @@ viewToolbar { filter, filterLevels, logs } filteredLogs =
                 _ ->
                     button [ class "btn btn-link", onClick FetchLogs, type_ "button" ] [ text "refresh" ]
     in
-    form [ class "logviewer__toolbar navbar-collapse" ]
-        [ viewCount logs filteredLogs
-        , div [ class "logviewer__toolbar__filters" ]
-            [ viewFilterRadio Info filterLevels
-            , viewFilterRadio Warning filterLevels
-            , viewFilterRadio Error filterLevels
+        form [ class "logviewer__toolbar navbar-collapse" ]
+            [ viewCount logs filteredLogs
+            , div [ class "logviewer__toolbar__filters" ]
+                [ viewFilterRadio Info filterLevels
+                , viewFilterRadio Warning filterLevels
+                , viewFilterRadio Error filterLevels
+                ]
+            , input [ class "form-control", onInput (\f -> Filter f), value filter ] []
+            , refreshButton
             ]
-        , input [ class "form-control", onInput (\f -> Filter f), value filter ] []
-        , refreshButton
-        ]
 
 
 viewCount : LogStatus -> Logs -> Html Msg
@@ -201,9 +201,9 @@ viewCount logs filteredLogs =
                     else
                         countLogsLength
             in
-            div
-                [ class "logviewer__toolbar__count" ]
-                [ text count ]
+                div
+                    [ class "logviewer__toolbar__count" ]
+                    [ text count ]
 
         Failure _ ->
             div
@@ -268,7 +268,14 @@ viewLog filter log =
 markContent : Log -> String -> List (Html Msg)
 markContent log filter =
     String.split log.content filter
-        |> List.map (\l -> text l)
+        |> List.indexedMap markLog
+
+
+markLog index log =
+    if modBy 2 index == 0 then
+        text log
+    else
+        mark [] [ text log ]
 
 
 fetchLogs : String -> Cmd Msg
