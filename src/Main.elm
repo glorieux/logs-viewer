@@ -1,4 +1,4 @@
-module Main exposing (Log, LogLevel(..), LogStatus(..), Logs, Model, Msg(..), decodeLog, decodeLogLevel, decodeLogs, extract, fetchLogs, filterLogs, init, levelToString, main, pluralize, splitCaseInsensitive, subscriptions, update, view, viewCount, viewFilterRadio, viewKeyedLog, viewLog, viewLogs, viewToolbar)
+module Main exposing (Log, LogLevel(..), LogStatus(..), Logs, Model, Msg(..), decodeLog, decodeLogLevel, decodeLogs, fetchLogs, filterLogs, init, levelToString, main, pluralize, subscriptions, update, view, viewCount, viewFilterRadio, viewKeyedLog, viewLog, viewLogs, viewToolbar)
 
 import Browser
 import Html exposing (Html, button, div, form, h1, input, label, mark, span, table, tbody, td, text, tr)
@@ -7,6 +7,8 @@ import Html.Events exposing (onCheck, onClick, onInput)
 import Html.Keyed as Keyed
 import Html.Lazy exposing (lazy, lazy2, lazy3)
 import Http
+
+import Text exposing (TextResult(..), splitMatchCaseInsensitive)
 
 
 main =
@@ -268,69 +270,22 @@ viewLog filter log =
         ]
 
 
-enhanceIndexes : Int -> Int -> List Int -> List Int
-enhanceIndexes separatorLength index accumulator =
-    List.concat [ accumulator, [ index ], [ index + separatorLength ] ]
-
-
-extract : List Int -> String -> List String -> List String
-extract indexes string listString =
-    case indexes of
-        [] ->
-            listString
-
-        head :: tail ->
-            case List.head tail of
-                Nothing ->
-                    List.reverse listString
-
-                Just tailhead ->
-                    extract tail string (String.slice head tailhead string :: listString)
-
-
-splitCaseInsensitive : String -> String -> List String
-splitCaseInsensitive separator string =
-    let
-        separatorLength =
-            String.length separator
-
-        upperSeparator =
-            String.toUpper separator
-
-        upperString =
-            String.toUpper string
-
-        indexes =
-            List.concat
-                [ [ 0 ]
-                , List.foldl
-                    (enhanceIndexes separatorLength)
-                    []
-                    (String.indexes upperSeparator upperString)
-                , [ String.length string ]
-                ]
-
-        listString =
-            extract indexes string []
-    in
-    listString
-
-
 markContent : String -> String -> List (Html Msg)
 markContent log filter =
-    if filter == "" then
+    if String.length filter < 2 then
         [ text log ]
 
     else
-        List.indexedMap markLog (splitCaseInsensitive filter log)
+        List.map markLog (splitMatchCaseInsensitive filter log)
 
 
-markLog index log =
-    if modBy 2 index == 0 then
-        text log
-
-    else
-        mark [] [ text log ]
+markLog log =
+    case log of
+        Match string ->
+            mark [] [ text string ]
+    
+        Rest string ->
+            text string
 
 
 fetchLogs : String -> Cmd Msg

@@ -5907,7 +5907,6 @@ var author$project$Main$levelToString = function (level) {
 			return 'Info';
 	}
 };
-var elm$core$Basics$modBy = _Basics_modBy;
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$map2 = _Json_map2;
 var elm$json$Json$Decode$succeed = _Json_succeed;
@@ -5926,112 +5925,119 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 var elm$html$Html$mark = _VirtualDom_node('mark');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
-var author$project$Main$markLog = F2(
-	function (index, log) {
-		return (!A2(elm$core$Basics$modBy, 2, index)) ? elm$html$Html$text(log) : A2(
+var author$project$Main$markLog = function (log) {
+	if (log.$ === 'Match') {
+		var string = log.a;
+		return A2(
 			elm$html$Html$mark,
 			_List_Nil,
 			_List_fromArray(
 				[
-					elm$html$Html$text(log)
+					elm$html$Html$text(string)
 				]));
-	});
-var elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3(elm$core$List$foldr, elm$core$List$cons, ys, xs);
-		}
-	});
-var elm$core$List$concat = function (lists) {
-	return A3(elm$core$List$foldr, elm$core$List$append, _List_Nil, lists);
-};
-var author$project$Main$enhanceIndexes = F3(
-	function (separatorLength, index, accumulator) {
-		return elm$core$List$concat(
-			_List_fromArray(
-				[
-					accumulator,
-					_List_fromArray(
-					[index]),
-					_List_fromArray(
-					[index + separatorLength])
-				]));
-	});
-var elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return elm$core$Maybe$Just(x);
 	} else {
-		return elm$core$Maybe$Nothing;
+		var string = log.a;
+		return elm$html$Html$text(string);
 	}
 };
+var author$project$Text$Rest = function (a) {
+	return {$: 'Rest', a: a};
+};
+var author$project$Text$Match = function (a) {
+	return {$: 'Match', a: a};
+};
+var elm$core$String$length = _String_length;
 var elm$core$String$slice = _String_slice;
-var author$project$Main$extract = F3(
-	function (indexes, string, listString) {
-		extract:
+var author$project$Text$extractRecursive = F5(
+	function (separatorLength, text, indexes, currentIndex, result) {
+		extractRecursive:
 		while (true) {
 			if (!indexes.b) {
-				return listString;
+				return _Utils_eq(
+					currentIndex,
+					elm$core$String$length(text)) ? elm$core$List$reverse(result) : elm$core$List$reverse(
+					A2(
+						elm$core$List$cons,
+						author$project$Text$Rest(
+							A3(
+								elm$core$String$slice,
+								currentIndex,
+								elm$core$String$length(text),
+								text)),
+						result));
 			} else {
 				var head = indexes.a;
 				var tail = indexes.b;
-				var _n1 = elm$core$List$head(tail);
-				if (_n1.$ === 'Nothing') {
-					return elm$core$List$reverse(listString);
-				} else {
-					var tailhead = _n1.a;
-					var $temp$indexes = tail,
-						$temp$string = string,
-						$temp$listString = A2(
+				if (!head) {
+					var $temp$separatorLength = separatorLength,
+						$temp$text = text,
+						$temp$indexes = tail,
+						$temp$currentIndex = separatorLength,
+						$temp$result = A2(
 						elm$core$List$cons,
-						A3(elm$core$String$slice, head, tailhead, string),
-						listString);
+						author$project$Text$Match(
+							A3(elm$core$String$slice, head, head + separatorLength, text)),
+						result);
+					separatorLength = $temp$separatorLength;
+					text = $temp$text;
 					indexes = $temp$indexes;
-					string = $temp$string;
-					listString = $temp$listString;
-					continue extract;
+					currentIndex = $temp$currentIndex;
+					result = $temp$result;
+					continue extractRecursive;
+				} else {
+					var $temp$separatorLength = separatorLength,
+						$temp$text = text,
+						$temp$indexes = tail,
+						$temp$currentIndex = head + separatorLength,
+						$temp$result = A2(
+						elm$core$List$cons,
+						author$project$Text$Match(
+							A3(elm$core$String$slice, head, head + separatorLength, text)),
+						A2(
+							elm$core$List$cons,
+							author$project$Text$Rest(
+								A3(elm$core$String$slice, currentIndex, head, text)),
+							result));
+					separatorLength = $temp$separatorLength;
+					text = $temp$text;
+					indexes = $temp$indexes;
+					currentIndex = $temp$currentIndex;
+					result = $temp$result;
+					continue extractRecursive;
 				}
 			}
 		}
 	});
-var elm$core$String$indexes = _String_indexes;
-var elm$core$String$length = _String_length;
-var elm$core$String$toUpper = _String_toUpper;
-var author$project$Main$splitCaseInsensitive = F2(
-	function (separator, string) {
-		var upperString = elm$core$String$toUpper(string);
-		var upperSeparator = elm$core$String$toUpper(separator);
-		var separatorLength = elm$core$String$length(separator);
-		var indexes = elm$core$List$concat(
-			_List_fromArray(
+var author$project$Text$extract = F3(
+	function (separatorLength, text, indexes) {
+		if (!indexes.b) {
+			return _List_fromArray(
 				[
-					_List_fromArray(
-					[0]),
-					A3(
-					elm$core$List$foldl,
-					author$project$Main$enhanceIndexes(separatorLength),
-					_List_Nil,
-					A2(elm$core$String$indexes, upperSeparator, upperString)),
-					_List_fromArray(
-					[
-						elm$core$String$length(string)
-					])
-				]));
-		var listString = A3(author$project$Main$extract, indexes, string, _List_Nil);
-		return listString;
+					author$project$Text$Rest(text)
+				]);
+		} else {
+			return A5(author$project$Text$extractRecursive, separatorLength, text, indexes, 0, _List_Nil);
+		}
+	});
+var elm$core$String$indexes = _String_indexes;
+var author$project$Text$splitMatchCaseInsensitive = F2(
+	function (separator, text) {
+		var separatorLength = elm$core$String$length(separator);
+		var indexes = A2(
+			elm$core$String$indexes,
+			elm$core$String$toLower(separator),
+			elm$core$String$toLower(text));
+		return A3(author$project$Text$extract, separatorLength, text, indexes);
 	});
 var author$project$Main$markContent = F2(
 	function (log, filter) {
-		return (filter === '') ? _List_fromArray(
+		return (elm$core$String$length(filter) < 2) ? _List_fromArray(
 			[
 				elm$html$Html$text(log)
 			]) : A2(
-			elm$core$List$indexedMap,
+			elm$core$List$map,
 			author$project$Main$markLog,
-			A2(author$project$Main$splitCaseInsensitive, filter, log));
+			A2(author$project$Text$splitMatchCaseInsensitive, filter, log));
 	});
 var elm$html$Html$td = _VirtualDom_node('td');
 var elm$html$Html$tr = _VirtualDom_node('tr');
