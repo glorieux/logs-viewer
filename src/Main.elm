@@ -1,7 +1,7 @@
-module Main exposing (Log, LogLevel(..), LogStatus(..), Logs, Model, Msg(..), markContent, decodeLog, decodeLogLevel, decodeLogs, fetchLogs, filterLogs, init, levelToString, main, pluralize, subscriptions, update, view, viewCount, viewFilterRadio, viewKeyedLog, viewLog, viewLogs, viewToolbar)
+module Main exposing (Log, LogLevel(..), LogStatus(..), Logs, Model, Msg(..), decodeLog, decodeLogLevel, decodeLogs, extract, fetchLogs, filterLogs, init, levelToString, main, pluralize, splitCaseInsensitive, subscriptions, update, view, viewCount, viewFilterRadio, viewKeyedLog, viewLog, viewLogs, viewToolbar)
 
 import Browser
-import Html exposing (Html, button, mark, div, form, h1, input, label, span, table, tbody, td, text, tr)
+import Html exposing (Html, button, div, form, h1, input, label, mark, span, table, tbody, td, text, tr)
 import Html.Attributes exposing (checked, class, disabled, for, id, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
 import Html.Keyed as Keyed
@@ -74,13 +74,13 @@ init maybeUrl =
         url =
             Maybe.withDefault "http://localhost:8080/logs" maybeUrl
     in
-        ( { logs = Loading
-          , filter = ""
-          , filterLevels = [ Info ]
-          , url = url
-          }
-        , fetchLogs url
-        )
+    ( { logs = Loading
+      , filter = ""
+      , filterLevels = [ Info ]
+      , url = url
+      }
+    , fetchLogs url
+    )
 
 
 subscriptions : Model -> Sub Msg
@@ -127,8 +127,10 @@ decodeLog index log =
 decodeLogLevel log =
     if String.contains "error" (String.toLower log) then
         Error
+
     else if String.contains "warn" (String.toLower log) then
         Warning
+
     else
         Info
 
@@ -147,10 +149,10 @@ view model =
                 Failure _ ->
                     []
     in
-        div [ class "logviewer" ]
-            [ lazy2 viewToolbar model filteredLogs
-            , lazy2 viewLogs model filteredLogs
-            ]
+    div [ class "logviewer" ]
+        [ lazy2 viewToolbar model filteredLogs
+        , lazy2 viewLogs model filteredLogs
+        ]
 
 
 viewToolbar : Model -> Logs -> Html Msg
@@ -164,16 +166,16 @@ viewToolbar { filter, filterLevels, logs } filteredLogs =
                 _ ->
                     button [ class "btn btn-link", onClick FetchLogs, type_ "button" ] [ text "refresh" ]
     in
-        form [ class "logviewer__toolbar navbar-collapse" ]
-            [ viewCount logs filteredLogs
-            , div [ class "logviewer__toolbar__filters" ]
-                [ viewFilterRadio Info filterLevels
-                , viewFilterRadio Warning filterLevels
-                , viewFilterRadio Error filterLevels
-                ]
-            , input [ class "form-control", onInput (\f -> Filter f), value filter ] []
-            , refreshButton
+    form [ class "logviewer__toolbar navbar-collapse" ]
+        [ viewCount logs filteredLogs
+        , div [ class "logviewer__toolbar__filters" ]
+            [ viewFilterRadio Info filterLevels
+            , viewFilterRadio Warning filterLevels
+            , viewFilterRadio Error filterLevels
             ]
+        , input [ class "form-control", onInput (\f -> Filter f), value filter ] []
+        , refreshButton
+        ]
 
 
 viewCount : LogStatus -> Logs -> Html Msg
@@ -198,12 +200,13 @@ viewCount logs filteredLogs =
                 count =
                     if logsLength /= filteredLogsLength then
                         countLogsLength ++ " (" ++ (String.fromInt filteredLogsLength ++ " " ++ pluralize "match" "matches" filteredLogsLength) ++ ")"
+
                     else
                         countLogsLength
             in
-                div
-                    [ class "logviewer__toolbar__count" ]
-                    [ text count ]
+            div
+                [ class "logviewer__toolbar__count" ]
+                [ text count ]
 
         Failure _ ->
             div
@@ -265,15 +268,69 @@ viewLog filter log =
         ]
 
 
+enhanceIndexes : Int -> Int -> List Int -> List Int
+enhanceIndexes separatorLength index accumulator =
+    List.concat [ accumulator, [ index ], [ index + separatorLength ] ]
+
+
+extract : List Int -> String -> List String -> List String
+extract indexes string listString =
+    case indexes of
+        [] ->
+            listString
+
+        head :: tail ->
+            case List.head tail of
+                Nothing ->
+                    List.reverse listString
+
+                Just tailhead ->
+                    extract tail string (String.slice head tailhead string :: listString)
+
+
+splitCaseInsensitive : String -> String -> List String
+splitCaseInsensitive separator string =
+    let
+        separatorLength =
+            String.length separator
+
+        upperSeparator =
+            String.toUpper separator
+
+        upperString =
+            String.toUpper string
+
+        indexes =
+            List.concat
+                [ [ 0 ]
+                , List.foldl
+                    (enhanceIndexes separatorLength)
+                    []
+                    (String.indexes upperSeparator upperString)
+                , [ String.length string ]
+                ]
+
+        listString =
+            extract indexes string []
+    in
+    listString
+
+
 markContent : String -> String -> List (Html Msg)
 markContent log filter =
     if filter == "" then
-        [text log]
-    else
-        String.split filter log
-            |> List.map text
-            |> List.intersperse (mark [] [ text filter ])
+        [ text log ]
 
+    else
+        List.indexedMap markLog (splitCaseInsensitive filter log)
+
+
+markLog index log =
+    if modBy 2 index == 0 then
+        text log
+
+    else
+        mark [] [ text log ]
 
 
 fetchLogs : String -> Cmd Msg
@@ -286,5 +343,6 @@ pluralize : String -> String -> Int -> String
 pluralize singular plural number =
     if number == 1 then
         singular
+
     else
         plural

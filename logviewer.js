@@ -5907,24 +5907,7 @@ var author$project$Main$levelToString = function (level) {
 			return 'Info';
 	}
 };
-var elm$core$List$intersperse = F2(
-	function (sep, xs) {
-		if (!xs.b) {
-			return _List_Nil;
-		} else {
-			var hd = xs.a;
-			var tl = xs.b;
-			var step = F2(
-				function (x, rest) {
-					return A2(
-						elm$core$List$cons,
-						sep,
-						A2(elm$core$List$cons, x, rest));
-				});
-			var spersed = A3(elm$core$List$foldr, step, _List_Nil, tl);
-			return A2(elm$core$List$cons, hd, spersed);
-		}
-	});
+var elm$core$Basics$modBy = _Basics_modBy;
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$map2 = _Json_map2;
 var elm$json$Json$Decode$succeed = _Json_succeed;
@@ -5943,24 +5926,112 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 var elm$html$Html$mark = _VirtualDom_node('mark');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
+var author$project$Main$markLog = F2(
+	function (index, log) {
+		return (!A2(elm$core$Basics$modBy, 2, index)) ? elm$html$Html$text(log) : A2(
+			elm$html$Html$mark,
+			_List_Nil,
+			_List_fromArray(
+				[
+					elm$html$Html$text(log)
+				]));
+	});
+var elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3(elm$core$List$foldr, elm$core$List$cons, ys, xs);
+		}
+	});
+var elm$core$List$concat = function (lists) {
+	return A3(elm$core$List$foldr, elm$core$List$append, _List_Nil, lists);
+};
+var author$project$Main$enhanceIndexes = F3(
+	function (separatorLength, index, accumulator) {
+		return elm$core$List$concat(
+			_List_fromArray(
+				[
+					accumulator,
+					_List_fromArray(
+					[index]),
+					_List_fromArray(
+					[index + separatorLength])
+				]));
+	});
+var elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return elm$core$Maybe$Just(x);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var elm$core$String$slice = _String_slice;
+var author$project$Main$extract = F3(
+	function (indexes, string, listString) {
+		extract:
+		while (true) {
+			if (!indexes.b) {
+				return listString;
+			} else {
+				var head = indexes.a;
+				var tail = indexes.b;
+				var _n1 = elm$core$List$head(tail);
+				if (_n1.$ === 'Nothing') {
+					return elm$core$List$reverse(listString);
+				} else {
+					var tailhead = _n1.a;
+					var $temp$indexes = tail,
+						$temp$string = string,
+						$temp$listString = A2(
+						elm$core$List$cons,
+						A3(elm$core$String$slice, head, tailhead, string),
+						listString);
+					indexes = $temp$indexes;
+					string = $temp$string;
+					listString = $temp$listString;
+					continue extract;
+				}
+			}
+		}
+	});
+var elm$core$String$indexes = _String_indexes;
+var elm$core$String$length = _String_length;
+var elm$core$String$toUpper = _String_toUpper;
+var author$project$Main$splitCaseInsensitive = F2(
+	function (separator, string) {
+		var upperString = elm$core$String$toUpper(string);
+		var upperSeparator = elm$core$String$toUpper(separator);
+		var separatorLength = elm$core$String$length(separator);
+		var indexes = elm$core$List$concat(
+			_List_fromArray(
+				[
+					_List_fromArray(
+					[0]),
+					A3(
+					elm$core$List$foldl,
+					author$project$Main$enhanceIndexes(separatorLength),
+					_List_Nil,
+					A2(elm$core$String$indexes, upperSeparator, upperString)),
+					_List_fromArray(
+					[
+						elm$core$String$length(string)
+					])
+				]));
+		var listString = A3(author$project$Main$extract, indexes, string, _List_Nil);
+		return listString;
+	});
 var author$project$Main$markContent = F2(
 	function (log, filter) {
 		return (filter === '') ? _List_fromArray(
 			[
-				elm$html$Html$text(log.content)
+				elm$html$Html$text(log)
 			]) : A2(
-			elm$core$List$intersperse,
-			A2(
-				elm$html$Html$mark,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text(filter)
-					])),
-			A2(
-				elm$core$List$map,
-				elm$html$Html$text,
-				A2(elm$core$String$split, filter, log.content)));
+			elm$core$List$indexedMap,
+			author$project$Main$markLog,
+			A2(author$project$Main$splitCaseInsensitive, filter, log));
 	});
 var elm$html$Html$td = _VirtualDom_node('td');
 var elm$html$Html$tr = _VirtualDom_node('tr');
@@ -6001,7 +6072,7 @@ var author$project$Main$viewLog = F2(
 						[
 							elm$html$Html$Attributes$class('logviewer__content__line__content')
 						]),
-					A2(author$project$Main$markContent, log, filter))
+					A2(author$project$Main$markContent, log.content, filter))
 				]));
 	});
 var elm$virtual_dom$VirtualDom$lazy2 = _VirtualDom_lazy2;
@@ -6367,8 +6438,6 @@ var elm$core$Task$perform = F2(
 			elm$core$Task$Perform(
 				A2(elm$core$Task$map, toMessage, task)));
 	});
-var elm$core$String$length = _String_length;
-var elm$core$String$slice = _String_slice;
 var elm$core$String$dropLeft = F2(
 	function (n, string) {
 		return (n < 1) ? string : A3(
@@ -6380,7 +6449,6 @@ var elm$core$String$dropLeft = F2(
 var elm$core$String$startsWith = _String_startsWith;
 var elm$url$Url$Http = {$: 'Http'};
 var elm$url$Url$Https = {$: 'Https'};
-var elm$core$String$indexes = _String_indexes;
 var elm$core$String$isEmpty = function (string) {
 	return string === '';
 };
