@@ -1,12 +1,14 @@
 module Main exposing (Log, LogLevel(..), LogStatus(..), Logs, Model, Msg(..), decodeLog, decodeLogLevel, decodeLogs, fetchLogs, filterLogs, init, levelToString, main, pluralize, subscriptions, update, view, viewCount, viewFilterRadio, viewKeyedLog, viewLog, viewLogs, viewToolbar)
 
 import Browser
-import Html exposing (Html, button, div, form, h1, input, label, span, table, tbody, td, text, tr)
+import Html exposing (Html, button, div, form, h1, input, label, mark, span, table, tbody, td, text, tr)
 import Html.Attributes exposing (checked, class, disabled, for, id, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
 import Html.Keyed as Keyed
 import Html.Lazy exposing (lazy, lazy2, lazy3)
 import Http
+
+import Text exposing (TextResult(..), splitMatchCaseInsensitive)
 
 
 main =
@@ -232,13 +234,17 @@ viewFilterRadio level filterLevels =
 
 
 viewLogs : Model -> Logs -> Html Msg
-viewLogs { logs } filteredLogs =
+viewLogs { logs, filter } filteredLogs =
     case logs of
         Loading ->
             h1 [ class "tfd-logs-viewer-empty" ] [ text "Loading" ]
 
         Success _ ->
-            table [ class "logviewer__content" ] [ Keyed.node "tbody" [] (List.map viewKeyedLog filteredLogs) ]
+            table [ class "logviewer__content" ]
+                [ Keyed.node "tbody"
+                    []
+                    (List.map (viewKeyedLog filter) filteredLogs)
+                ]
 
         Failure error ->
             h1 [ class "tfd-logs-viewer-empty" ] [ text "Error loading logs" ]
@@ -251,17 +257,35 @@ filterLogs filter filterLevels logs =
         |> List.filter (\s -> String.contains (String.toLower filter) (String.toLower s.content))
 
 
-viewKeyedLog : Log -> ( String, Html Msg )
-viewKeyedLog log =
-    ( String.fromInt log.number, lazy viewLog log )
+viewKeyedLog : String -> Log -> ( String, Html Msg )
+viewKeyedLog filter log =
+    ( String.fromInt log.number, lazy2 viewLog filter log )
 
 
-viewLog : Log -> Html Msg
-viewLog log =
+viewLog : String -> Log -> Html Msg
+viewLog filter log =
     tr [ class ("level-" ++ levelToString log.level) ]
         [ td [ class "logviewer__content__line__number" ] [ text (String.fromInt log.number) ]
-        , td [ class "logviewer__content__line__content" ] [ text log.content ]
+        , td [ class "logviewer__content__line__content" ] (markContent log.content filter)
         ]
+
+
+markContent : String -> String -> List (Html Msg)
+markContent log filter =
+    if String.length filter < 2 then
+        [ text log ]
+
+    else
+        List.map markLog (splitMatchCaseInsensitive filter log)
+
+
+markLog log =
+    case log of
+        Match string ->
+            mark [] [ text string ]
+    
+        Rest string ->
+            text string
 
 
 fetchLogs : String -> Cmd Msg

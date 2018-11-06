@@ -5922,9 +5922,124 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 			return 3;
 	}
 };
-var elm$html$Html$td = _VirtualDom_node('td');
+var elm$html$Html$mark = _VirtualDom_node('mark');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
+var author$project$Main$markLog = function (log) {
+	if (log.$ === 'Match') {
+		var string = log.a;
+		return A2(
+			elm$html$Html$mark,
+			_List_Nil,
+			_List_fromArray(
+				[
+					elm$html$Html$text(string)
+				]));
+	} else {
+		var string = log.a;
+		return elm$html$Html$text(string);
+	}
+};
+var author$project$Text$Rest = function (a) {
+	return {$: 'Rest', a: a};
+};
+var author$project$Text$Match = function (a) {
+	return {$: 'Match', a: a};
+};
+var elm$core$String$length = _String_length;
+var elm$core$String$slice = _String_slice;
+var author$project$Text$extractRecursive = F5(
+	function (separatorLength, text, indexes, currentIndex, result) {
+		extractRecursive:
+		while (true) {
+			if (!indexes.b) {
+				return _Utils_eq(
+					currentIndex,
+					elm$core$String$length(text)) ? elm$core$List$reverse(result) : elm$core$List$reverse(
+					A2(
+						elm$core$List$cons,
+						author$project$Text$Rest(
+							A3(
+								elm$core$String$slice,
+								currentIndex,
+								elm$core$String$length(text),
+								text)),
+						result));
+			} else {
+				var head = indexes.a;
+				var tail = indexes.b;
+				if (!head) {
+					var $temp$separatorLength = separatorLength,
+						$temp$text = text,
+						$temp$indexes = tail,
+						$temp$currentIndex = separatorLength,
+						$temp$result = A2(
+						elm$core$List$cons,
+						author$project$Text$Match(
+							A3(elm$core$String$slice, head, head + separatorLength, text)),
+						result);
+					separatorLength = $temp$separatorLength;
+					text = $temp$text;
+					indexes = $temp$indexes;
+					currentIndex = $temp$currentIndex;
+					result = $temp$result;
+					continue extractRecursive;
+				} else {
+					var $temp$separatorLength = separatorLength,
+						$temp$text = text,
+						$temp$indexes = tail,
+						$temp$currentIndex = head + separatorLength,
+						$temp$result = A2(
+						elm$core$List$cons,
+						author$project$Text$Match(
+							A3(elm$core$String$slice, head, head + separatorLength, text)),
+						A2(
+							elm$core$List$cons,
+							author$project$Text$Rest(
+								A3(elm$core$String$slice, currentIndex, head, text)),
+							result));
+					separatorLength = $temp$separatorLength;
+					text = $temp$text;
+					indexes = $temp$indexes;
+					currentIndex = $temp$currentIndex;
+					result = $temp$result;
+					continue extractRecursive;
+				}
+			}
+		}
+	});
+var author$project$Text$extract = F3(
+	function (separatorLength, text, indexes) {
+		if (!indexes.b) {
+			return _List_fromArray(
+				[
+					author$project$Text$Rest(text)
+				]);
+		} else {
+			return A5(author$project$Text$extractRecursive, separatorLength, text, indexes, 0, _List_Nil);
+		}
+	});
+var elm$core$String$indexes = _String_indexes;
+var author$project$Text$splitMatchCaseInsensitive = F2(
+	function (separator, text) {
+		var separatorLength = elm$core$String$length(separator);
+		var indexes = A2(
+			elm$core$String$indexes,
+			elm$core$String$toLower(separator),
+			elm$core$String$toLower(text));
+		return A3(author$project$Text$extract, separatorLength, text, indexes);
+	});
+var author$project$Main$markContent = F2(
+	function (log, filter) {
+		return (elm$core$String$length(filter) < 2) ? _List_fromArray(
+			[
+				elm$html$Html$text(log)
+			]) : A2(
+			elm$core$List$map,
+			author$project$Main$markLog,
+			A2(author$project$Text$splitMatchCaseInsensitive, filter, log));
+	});
+var elm$html$Html$td = _VirtualDom_node('td');
 var elm$html$Html$tr = _VirtualDom_node('tr');
 var elm$json$Json$Encode$string = _Json_wrap;
 var elm$html$Html$Attributes$stringProperty = F2(
@@ -5935,46 +6050,45 @@ var elm$html$Html$Attributes$stringProperty = F2(
 			elm$json$Json$Encode$string(string));
 	});
 var elm$html$Html$Attributes$class = elm$html$Html$Attributes$stringProperty('className');
-var author$project$Main$viewLog = function (log) {
-	return A2(
-		elm$html$Html$tr,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class(
-				'level-' + author$project$Main$levelToString(log.level))
-			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$td,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('logviewer__content__line__number')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text(
-						elm$core$String$fromInt(log.number))
-					])),
-				A2(
-				elm$html$Html$td,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('logviewer__content__line__content')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text(log.content)
-					]))
-			]));
-};
-var elm$virtual_dom$VirtualDom$lazy = _VirtualDom_lazy;
-var elm$html$Html$Lazy$lazy = elm$virtual_dom$VirtualDom$lazy;
-var author$project$Main$viewKeyedLog = function (log) {
-	return _Utils_Tuple2(
-		elm$core$String$fromInt(log.number),
-		A2(elm$html$Html$Lazy$lazy, author$project$Main$viewLog, log));
-};
+var author$project$Main$viewLog = F2(
+	function (filter, log) {
+		return A2(
+			elm$html$Html$tr,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class(
+					'level-' + author$project$Main$levelToString(log.level))
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$td,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('logviewer__content__line__number')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text(
+							elm$core$String$fromInt(log.number))
+						])),
+					A2(
+					elm$html$Html$td,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('logviewer__content__line__content')
+						]),
+					A2(author$project$Main$markContent, log.content, filter))
+				]));
+	});
+var elm$virtual_dom$VirtualDom$lazy2 = _VirtualDom_lazy2;
+var elm$html$Html$Lazy$lazy2 = elm$virtual_dom$VirtualDom$lazy2;
+var author$project$Main$viewKeyedLog = F2(
+	function (filter, log) {
+		return _Utils_Tuple2(
+			elm$core$String$fromInt(log.number),
+			A3(elm$html$Html$Lazy$lazy2, author$project$Main$viewLog, filter, log));
+	});
 var elm$html$Html$h1 = _VirtualDom_node('h1');
 var elm$html$Html$table = _VirtualDom_node('table');
 var elm$virtual_dom$VirtualDom$keyedNode = function (tag) {
@@ -5985,6 +6099,7 @@ var elm$html$Html$Keyed$node = elm$virtual_dom$VirtualDom$keyedNode;
 var author$project$Main$viewLogs = F2(
 	function (_n0, filteredLogs) {
 		var logs = _n0.logs;
+		var filter = _n0.filter;
 		switch (logs.$) {
 			case 'Loading':
 				return A2(
@@ -6010,7 +6125,10 @@ var author$project$Main$viewLogs = F2(
 							elm$html$Html$Keyed$node,
 							'tbody',
 							_List_Nil,
-							A2(elm$core$List$map, author$project$Main$viewKeyedLog, filteredLogs))
+							A2(
+								elm$core$List$map,
+								author$project$Main$viewKeyedLog(filter),
+								filteredLogs))
 						]));
 			default:
 				var error = logs.a;
@@ -6277,8 +6395,6 @@ var author$project$Main$viewToolbar = F2(
 					refreshButton
 				]));
 	});
-var elm$virtual_dom$VirtualDom$lazy2 = _VirtualDom_lazy2;
-var elm$html$Html$Lazy$lazy2 = elm$virtual_dom$VirtualDom$lazy2;
 var author$project$Main$view = function (model) {
 	var filteredLogs = function () {
 		var _n0 = model.logs;
@@ -6328,8 +6444,6 @@ var elm$core$Task$perform = F2(
 			elm$core$Task$Perform(
 				A2(elm$core$Task$map, toMessage, task)));
 	});
-var elm$core$String$length = _String_length;
-var elm$core$String$slice = _String_slice;
 var elm$core$String$dropLeft = F2(
 	function (n, string) {
 		return (n < 1) ? string : A3(
@@ -6341,7 +6455,6 @@ var elm$core$String$dropLeft = F2(
 var elm$core$String$startsWith = _String_startsWith;
 var elm$url$Url$Http = {$: 'Http'};
 var elm$url$Url$Https = {$: 'Https'};
-var elm$core$String$indexes = _String_indexes;
 var elm$core$String$isEmpty = function (string) {
 	return string === '';
 };
